@@ -1,6 +1,7 @@
 package demo.bio;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import demo.util.ReadInput;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,22 +14,23 @@ import java.util.concurrent.*;
  *
  * @author : gb 2019/4/16
  */
-public class MyThreadsBioServer {
+public class ThreadsServer {
 
-    public void process() throws IOException {
+    void process() throws IOException {
         try (ServerSocket server = new ServerSocket(9091)) {
 
             long start = System.currentTimeMillis();
             while (true) {
                 //阻塞点
                 Socket socket = server.accept();
-                new Thread(() -> {
+                getExecutor().execute(() -> {
                     try {
-                        run(socket);
+                        InputStream in = socket.getInputStream();
+                        ReadInput.read(in);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-                }).start();
+                });
 
                 if (isEnd(start)) {
                     break;
@@ -42,36 +44,16 @@ public class MyThreadsBioServer {
         return (end - start) > Integer.MAX_VALUE;
     }
 
-    private void run(Socket socket) throws Exception {
-        InputStream in = socket.getInputStream();
-
-        byte[] b = new byte[1024];
-        while (true) {
-            //阻塞点
-            int length = in.read(b);
-            if (length != -1) {
-                String data = new String(b, 0, length, "utf-8");
-                System.out.println(data);
-            } else {
-                break;
-            }
-
-        }
-    }
-
-    private ExecutorService getExecutor(){
+    private ExecutorService getExecutor() {
 
         ThreadFactory namedThreadFactory = new ThreadFactoryBuilder()
                 .setNameFormat("demo-pool-%d").build();
         return new ThreadPoolExecutor(1, 1,
                 0L, TimeUnit.MILLISECONDS,
                 new LinkedBlockingQueue<>(1024), namedThreadFactory, new ThreadPoolExecutor.AbortPolicy());
-
-//        singleThreadPool.execute(()-> System.out.println(Thread.currentThread().getName()));
-//        singleThreadPool.shutdown();
     }
 
     public static void main(String[] args) throws Exception {
-        new MyThreadsBioServer().process();
+        new ThreadsServer().process();
     }
 }
