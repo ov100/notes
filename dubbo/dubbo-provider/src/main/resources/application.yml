@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: dubbo-nacos-provider
+
+demo:
+  service:
+    version: 1.0.0
+
+nacos:
+  host: 127.0.0.1
+  port: 8848
+
+dubbo:
+  scan:
+    base-packages: demo.dubbo.provider.service
+  registry:
+    address: nacos://${nacos.host}:${nacos.port}
+  protocol:
+    name: dubbo
+    port: -1
